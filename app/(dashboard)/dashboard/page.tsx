@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   const { data: employeesData } = useApi<{ employees: unknown[]; total: number }>("/api/employees", { limit: 1 });
   const { data: vehiclesData } = useApi<{ status: string }[]>("/api/vehicles", { limit: 100 });
-  const { data: clientsData } = useApi<unknown[]>("/api/client-management/clients", { limit: 1 });
+  const { data: clientsData } = useApi<unknown[]>("/api/clients", { limit: 1 });
   const { data: attendanceData } = useApi<{ records: { status: string }[] }>("/api/attendance", { date: today });
   const { data: inventoryData } = useApi<unknown[]>("/api/general-inventory/items");
   const { data: restrictedData } = useApi<unknown[]>("/api/restricted-inventory/items");

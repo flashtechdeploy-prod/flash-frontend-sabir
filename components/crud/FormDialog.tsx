@@ -86,7 +86,6 @@ export function FormDialog({
   const handleBlur = (name: string) => {
     setTouched((prev) => ({ ...prev, [name]: true }));
     
-    // Validate on blur
     const field = fields.find((f) => f.name === name);
     if (field?.validation) {
       const error = field.validation(values[name]);

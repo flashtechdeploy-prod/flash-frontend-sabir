@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/config";
 import { Employee2, Employee2ListItem } from "@/lib/types";
 import { DataTable, Column, FormDialog, FormField, DeleteDialog } from "@/components/crud";
 import { useApi, useMutation } from "@/hooks/use-api";
@@ -154,7 +155,7 @@ export default function Employees2Page() {
     const token = localStorage.getItem("access_token");
     
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/employees/by-db-id/${employeeDbId}/profile-photo`,
+      `${API_BASE_URL}/api/employees/by-db-id/${employeeDbId}/profile-photo`,
       { 
         method: "POST", 
         body: formData,

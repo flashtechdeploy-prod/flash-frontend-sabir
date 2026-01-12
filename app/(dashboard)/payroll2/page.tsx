@@ -12,7 +12,15 @@ import { DollarSign, Users, Clock, Calendar, Download, Calculator } from "lucide
 
 const payrollColumns: Column<PayrollEmployeeRow>[] = [
   { key: "employee_id", header: "ID", width: "80px" },
-  { key: "name", header: "Name" },
+  { key: "name", header: "Name",
+    render: (value, row) => {
+      // If name is empty, generate a placeholder name from employee ID
+      if (!value || value === "") {
+        return `Employee ${row.employee_id}`;
+      }
+      return value;
+    }
+  },
   { key: "department", header: "Dept" },
   { key: "present_days", header: "P", width: "40px" },
   { key: "absent_days", header: "A", width: "40px" },
@@ -56,6 +64,7 @@ export default function Payroll2Page() {
     { month: monthStr }
   );
 
+  console.log("Payroll Data:", data);
   const generateMutation = useMutation(
     (_: void) => api.post<void>("/api/payroll/report", { month: monthStr }),
     { onSuccess: () => refetch() }

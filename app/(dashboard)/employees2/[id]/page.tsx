@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Employee2 } from "@/lib/types";
 import { useApi } from "@/hooks/use-api";
+import { API_BASE_URL } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +62,7 @@ export default function EmployeeDetailPage() {
       // Get auth token from localStorage
       const token = localStorage.getItem("access_token");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/employees/by-db-id/${employeeId}/profile-photo`, {
+      const response = await fetch(`${API_BASE_URL}/api/employees/by-db-id/${employeeId}/profile-photo`, {
         method: "POST",
         body: formData,
         headers: token ? { Authorization: `Bearer ${token}` } : {},

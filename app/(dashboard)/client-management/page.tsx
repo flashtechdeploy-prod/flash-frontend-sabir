@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { DataTable, Column, FormDialog, FormField, DeleteDialog } from "@/components/crud";
 import { useApi, useMutation } from "@/hooks/use-api";
@@ -31,12 +32,12 @@ interface Client {
 interface ClientSite {
   id: number;
   client_id: number;
-  name: string;
-  code: string;
-  address?: string | null;
+  site_name: string;
+  site_type?: string | null;
+  site_address?: string | null;
   city?: string | null;
+  risk_level?: string | null;
   status: string;
-  guards_required?: number | null;
   created_at: string;
 }
 
@@ -105,11 +106,11 @@ const clientFormFields: FormField[] = [
 
 // Site columns for expanded view
 const siteColumns: Column<ClientSite>[] = [
-  { key: "code", header: "Site Code", width: "100px" },
-  { key: "name", header: "Site Name" },
-  { key: "address", header: "Address" },
+  { key: "site_name", header: "Site Name" },
+  { key: "site_type", header: "Type" },
+  { key: "site_address", header: "Address" },
   { key: "city", header: "City" },
-  { key: "guards_required", header: "Guards Req." },
+  { key: "risk_level", header: "Risk Level" },
   { 
     key: "status", 
     header: "Status",
@@ -121,14 +122,18 @@ const siteColumns: Column<ClientSite>[] = [
 ];
 
 const siteFormFields: FormField[] = [
-  { name: "code", label: "Site Code", required: true, placeholder: "e.g., SITE-001" },
-  { name: "name", label: "Site Name", required: true, placeholder: "Enter site name" },
-  { name: "address", label: "Address", placeholder: "Street address", colSpan: 2 },
+  { name: "site_name", label: "Site Name", required: true, placeholder: "Enter site name" },
+  { name: "site_type", label: "Site Type", placeholder: "e.g., Office, Warehouse, Store" },
+  { name: "site_address", label: "Address", placeholder: "Street address", colSpan: 2 },
   { name: "city", label: "City", placeholder: "City name" },
-  { name: "guards_required", label: "Guards Required", type: "number", min: 0 },
+  { name: "risk_level", label: "Risk Level", type: "select", options: [
+    { value: "Low", label: "Low" },
+    { value: "Medium", label: "Medium" },
+    { value: "High", label: "High" },
+  ]},
   { name: "status", label: "Status", type: "select", required: true, options: [
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
+    { value: "Active", label: "Active" },
+    { value: "Inactive", label: "Inactive" },
   ]},
 ];
 
@@ -136,6 +141,7 @@ export default function ClientManagementPage() {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [search, setSearch] = React.useState("");
+  const router = useRouter();
   
   // Dialog states
   const [formOpen, setFormOpen] = React.useState(false);
@@ -154,20 +160,84 @@ export default function ClientManagementPage() {
 
   // Fetch clients
   const { data, loading, error, refetch } = useApi<Client[]>(
-    "/api/client-management/clients",
+    "/api/clients",
     { skip: (page - 1) * pageSize, limit: pageSize, search: search || undefined }
+  );
+
+  // Fetch all clients for stats (without pagination)
+  const { data: allClients } = useApi<Client[]>("/api/clients", {});
+  // Fetch stats - all sites and contracts
+  const { data: allSitesData } = useApi<{ client_id: number; sites: ClientSite[] }[]>(
+    allClients && allClients.length > 0 ? "/api/clients/stats/sites" : "",
+    {},
+    { 
+      enabled: false, // We'll fetch manually
+      skip: true 
+    }
+  );
+
+  const { data: allContractsData } = useApi<{ client_id: number; contracts: any[] }[]>(
+    allClients && allClients.length > 0 ? "/api/clients/stats/contracts" : "",
+    {},
+    { 
+      enabled: false, // We'll fetch manually
+      skip: true
+    }
   );
 
   // Fetch sites for expanded client
   const { data: sitesData, refetch: refetchSites } = useApi<ClientSite[]>(
-    expandedClientId ? `/api/client-management/clients/${expandedClientId}/sites` : "",
+    expandedClientId ? `/api/clients/${expandedClientId}/sites` : "",
     {},
     { enabled: !!expandedClientId }
   );
 
+  // Calculate stats from all clients
+  const [totalSites, setTotalSites] = React.useState(0);
+  const [activeContracts, setActiveContracts] = React.useState(0);
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      if (!allClients || allClients.length === 0) {
+        setTotalSites(0);
+        setActiveContracts(0);
+        return;
+      }
+
+      try {
+        // Fetch all sites and contracts for all clients
+        const sitesPromises = allClients.map(client => 
+          api.get<ClientSite[]>(`/api/clients/${client.id}/sites`).catch(() => [])
+        );
+        const contractsPromises = allClients.map(client =>
+          api.get<any[]>(`/api/clients/${client.id}/contracts`).catch(() => [])
+        );
+
+        const [sitesResults, contractsResults] = await Promise.all([
+          Promise.all(sitesPromises),
+          Promise.all(contractsPromises)
+        ]);
+
+        // Calculate totals
+        const totalSitesCount = sitesResults.reduce((sum, sites) => sum + sites.length, 0);
+        const activeContractsCount = contractsResults.reduce((sum, contracts) => {
+          const active = contracts.filter(c => c.status?.toLowerCase() === "active").length;
+          return sum + active;
+        }, 0);
+
+        setTotalSites(totalSitesCount);
+        setActiveContracts(activeContractsCount);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, [allClients]);
+
   // Client mutations
   const createMutation = useMutation(
-    (data: ClientCreate) => api.post<Client>("/api/client-management/clients", data),
+    (data: ClientCreate) => api.post<Client>("/api/clients", data),
     {
       onSuccess: () => {
         setFormOpen(false);
@@ -178,7 +248,7 @@ export default function ClientManagementPage() {
   );
 
   const updateMutation = useMutation(
-    ({ id, data }: { id: number; data: ClientUpdate }) => api.put<Client>(`/api/client-management/clients/${id}`, data),
+    ({ id, data }: { id: number; data: ClientUpdate }) => api.put<Client>(`/api/clients/${id}`, data),
     {
       onSuccess: () => {
         setFormOpen(false);
@@ -189,7 +259,7 @@ export default function ClientManagementPage() {
   );
 
   const deleteMutation = useMutation(
-    (id: number) => api.del<void>(`/api/client-management/clients/${id}`),
+    (id: number) => api.del<void>(`/api/clients/${id}`),
     {
       onSuccess: () => {
         setDeleteOpen(false);
@@ -201,7 +271,7 @@ export default function ClientManagementPage() {
 
   // Site mutations
   const createSiteMutation = useMutation(
-    (data: Partial<ClientSite>) => api.post<ClientSite>(`/api/client-management/clients/${expandedClientId}/sites`, data),
+    (data: Partial<ClientSite>) => api.post<ClientSite>(`/api/clients/${expandedClientId}/sites`, data),
     {
       onSuccess: () => {
         setSiteFormOpen(false);
@@ -212,8 +282,8 @@ export default function ClientManagementPage() {
   );
 
   const updateSiteMutation = useMutation(
-    ({ id, data }: { id: number; data: Partial<ClientSite> }) => 
-      api.put<ClientSite>(`/api/client-management/clients/${expandedClientId}/sites/${id}`, data),
+    ({ id, data }: { id: number; data: Partial<ClientSite> }) =>
+      api.put<ClientSite>(`/api/clients/${expandedClientId}/sites/${id}`, data),
     {
       onSuccess: () => {
         setSiteFormOpen(false);
@@ -224,7 +294,7 @@ export default function ClientManagementPage() {
   );
 
   const deleteSiteMutation = useMutation(
-    (id: number) => api.del<void>(`/api/client-management/clients/${expandedClientId}/sites/${id}`),
+    (id: number) => api.del<void>(`/api/clients/${expandedClientId}/sites/${id}`),
     {
       onSuccess: () => {
         setSiteDeleteOpen(false);
@@ -250,7 +320,7 @@ export default function ClientManagementPage() {
   };
 
   const handleView = (client: Client) => {
-    setExpandedClientId(expandedClientId === client.id ? null : client.id);
+    router.push(`/client-management/${client.id}`);
   };
 
   const handleDelete = (client: Client) => {
@@ -297,7 +367,9 @@ export default function ClientManagementPage() {
   };
 
   const clients = data || [];
-  const total = clients.length;
+  const allClientsArray = allClients || [];
+  const total = allClientsArray.length;
+  const activeClientsCount = allClientsArray.filter(c => c.status?.toLowerCase() === "active").length;
   const sites = sitesData || [];
 
   return (
@@ -326,7 +398,7 @@ export default function ClientManagementPage() {
               <MapPin className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{clients.filter(c => c.status === "active").length}</p>
+              <p className="text-2xl font-bold">{activeClientsCount}</p>
               <p className="text-xs text-muted-foreground">Active Clients</p>
             </div>
           </div>
@@ -337,7 +409,7 @@ export default function ClientManagementPage() {
               <Users className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">-</p>
+              <p className="text-2xl font-bold">{totalSites}</p>
               <p className="text-xs text-muted-foreground">Total Sites</p>
             </div>
           </div>
@@ -348,7 +420,7 @@ export default function ClientManagementPage() {
               <FileText className="h-5 w-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">-</p>
+              <p className="text-2xl font-bold">{activeContracts}</p>
               <p className="text-xs text-muted-foreground">Active Contracts</p>
             </div>
           </div>
