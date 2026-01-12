@@ -20,8 +20,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const saved = localStorage.getItem("isDarkMode");
         if (saved !== null) {
             setIsDarkMode(saved === "true");
-        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            setIsDarkMode(true);
+        } else {
+            // Default to light mode (white theme)
+            setIsDarkMode(false);
         }
         setMounted(true);
     }, []);
