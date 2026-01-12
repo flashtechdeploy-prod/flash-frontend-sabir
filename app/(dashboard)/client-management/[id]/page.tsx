@@ -415,7 +415,6 @@ export default function ClientDetailPage() {
             data={sites}
             keyField="id"
             onEdit={handleEditSite}
-            showActionsColumn
           />
         ) : (
           <Card>
@@ -442,7 +441,6 @@ export default function ClientDetailPage() {
             data={contracts}
             keyField="id"
             onEdit={handleEditContract}
-            showActionsColumn
           />
         ) : (
           <Card>
