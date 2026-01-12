@@ -457,9 +457,9 @@ export default function ClientDetailPage() {
         onClose={() => setClientFormOpen(false)}
         title="Edit Client"
         fields={clientFormFields}
-        initialValues={(client as Record<string, unknown>) || {}}
+        initialValues={(client as unknown as Record<string, unknown>) || {}}
         onSubmit={handleClientSubmit}
-        loading={updateClientMutation.isLoading}
+        loading={updateClientMutation.loading}
         error={updateClientMutation.error}
       />
 
@@ -469,9 +469,9 @@ export default function ClientDetailPage() {
         onClose={() => setSiteFormOpen(false)}
         title={siteFormMode === "create" ? "Add New Site" : "Edit Site"}
         fields={siteFormFields}
-        initialValues={selectedSite || {}}
+        initialValues={(selectedSite as unknown as Record<string, unknown>) || {}}
         onSubmit={handleSiteSubmit}
-        loading={createSiteMutation.isLoading || updateSiteMutation.isLoading}
+        loading={createSiteMutation.loading || updateSiteMutation.loading}
         error={createSiteMutation.error || updateSiteMutation.error}
       />
 
@@ -481,9 +481,9 @@ export default function ClientDetailPage() {
         onClose={() => setContractFormOpen(false)}
         title={contractFormMode === "create" ? "Add New Contract" : "Edit Contract"}
         fields={contractFormFields}
-        initialValues={selectedContract || {}}
+        initialValues={(selectedContract as unknown as Record<string, unknown>) || {}}
         onSubmit={handleContractSubmit}
-        loading={createContractMutation.isLoading || updateContractMutation.isLoading}
+        loading={createContractMutation.loading || updateContractMutation.loading}
         error={createContractMutation.error || updateContractMutation.error}
       />
     </div>

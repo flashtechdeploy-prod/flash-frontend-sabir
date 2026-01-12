@@ -166,24 +166,6 @@ export default function ClientManagementPage() {
 
   // Fetch all clients for stats (without pagination)
   const { data: allClients } = useApi<Client[]>("/api/clients", {});
-  // Fetch stats - all sites and contracts
-  const { data: allSitesData } = useApi<{ client_id: number; sites: ClientSite[] }[]>(
-    allClients && allClients.length > 0 ? "/api/clients/stats/sites" : "",
-    {},
-    { 
-      enabled: false, // We'll fetch manually
-      skip: true 
-    }
-  );
-
-  const { data: allContractsData } = useApi<{ client_id: number; contracts: any[] }[]>(
-    allClients && allClients.length > 0 ? "/api/clients/stats/contracts" : "",
-    {},
-    { 
-      enabled: false, // We'll fetch manually
-      skip: true
-    }
-  );
 
   // Fetch sites for expanded client
   const { data: sitesData, refetch: refetchSites } = useApi<ClientSite[]>(
@@ -520,7 +502,7 @@ export default function ClientManagementPage() {
         onClose={() => setSiteDeleteOpen(false)}
         onConfirm={() => selectedSite && deleteSiteMutation.mutate(selectedSite.id)}
         title="Delete Site"
-        itemName={selectedSite?.name}
+        itemName={selectedSite?.site_name}
         loading={deleteSiteMutation.loading}
       />
     </div>

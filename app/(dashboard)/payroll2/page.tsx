@@ -18,7 +18,7 @@ const payrollColumns: Column<PayrollEmployeeRow>[] = [
       if (!value || value === "") {
         return `Employee ${row.employee_id}`;
       }
-      return value;
+      return String(value);
     }
   },
   { key: "department", header: "Dept" },
