@@ -457,7 +457,7 @@ export default function ClientDetailPage() {
         onClose={() => setClientFormOpen(false)}
         title="Edit Client"
         fields={clientFormFields}
-        initialValues={client || {}}
+        initialValues={(client as Record<string, unknown>) || {}}
         onSubmit={handleClientSubmit}
         loading={updateClientMutation.isLoading}
         error={updateClientMutation.error}
