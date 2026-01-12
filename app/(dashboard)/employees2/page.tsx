@@ -69,6 +69,12 @@ const employeeFormFields: FormField[] = [
   { name: "cnic", label: "CNIC", placeholder: "National ID" },
   { name: "date_of_birth", label: "Date of Birth", type: "date" },
   { name: "cnic_expiry_date", label: "CNIC Expiry", type: "date" },
+  { name: "fingerprint_thumb_file", label: "Thumb Impression", type: "file", accept: "image/*", helperText: "Upload thumb fingerprint" },
+  { name: "fingerprint_index_file", label: "Index Finger Impression", type: "file", accept: "image/*", helperText: "Upload index finger print" },
+  { name: "fingerprint_middle_file", label: "Middle Finger Impression", type: "file", accept: "image/*", helperText: "Upload middle finger print" },
+  { name: "fingerprint_ring_file", label: "Ring Finger Impression", type: "file", accept: "image/*", helperText: "Upload ring finger print" },
+  { name: "fingerprint_little_file", label: "Little Finger Impression", type: "file", accept: "image/*", helperText: "Upload little finger print" },
+  { name: "signature_file", label: "Signature", type: "file", accept: "image/*", helperText: "Upload signature image" },
   { name: "blood_group", label: "Blood Group", placeholder: "e.g., A+, O-" },
   { name: "domicile", label: "Domicile" },
   { name: "permanent_village", label: "Village" },
@@ -208,12 +214,24 @@ export default function Employees2Page() {
     const cnicPictureFile = values.cnic_picture_file as File | undefined;
     const policeClearanceFile = values.police_clearance_file as File | undefined;
     const vaccinationCertFile = values.vaccination_certificate_file as File | undefined;
+    const thumbFile = values.fingerprint_thumb_file as File | undefined;
+    const indexFile = values.fingerprint_index_file as File | undefined;
+    const middleFile = values.fingerprint_middle_file as File | undefined;
+    const ringFile = values.fingerprint_ring_file as File | undefined;
+    const littleFile = values.fingerprint_little_file as File | undefined;
+    const signatureFile = values.signature_file as File | undefined;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { 
       profile_photo_file: _photoFile, 
       cnic_picture_file: _cnicFile,
       police_clearance_file: _policeFile,
       vaccination_certificate_file: _vaccinationFile,
+      fingerprint_thumb_file: _thumbFile,
+      fingerprint_index_file: _indexFile,
+      fingerprint_middle_file: _middleFile,
+      fingerprint_ring_file: _ringFile,
+      fingerprint_little_file: _littleFile,
+      signature_file: _signatureFile,
       ...employeeData 
     } = values;
     
@@ -258,6 +276,52 @@ export default function Employees2Page() {
             console.error("Vaccination certificate upload failed:", vaccErr);
           }
         }
+
+        // Upload fingerprint files if provided
+        if (thumbFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, thumbFile, "fingerprint_thumb");
+          } catch (err) {
+            console.error("Thumb fingerprint upload failed:", err);
+          }
+        }
+        if (indexFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, indexFile, "fingerprint_index");
+          } catch (err) {
+            console.error("Index fingerprint upload failed:", err);
+          }
+        }
+        if (middleFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, middleFile, "fingerprint_middle");
+          } catch (err) {
+            console.error("Middle fingerprint upload failed:", err);
+          }
+        }
+        if (ringFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, ringFile, "fingerprint_ring");
+          } catch (err) {
+            console.error("Ring fingerprint upload failed:", err);
+          }
+        }
+        if (littleFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, littleFile, "fingerprint_little");
+          } catch (err) {
+            console.error("Little fingerprint upload failed:", err);
+          }
+        }
+
+        // Upload signature if provided
+        if (signatureFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, signatureFile, "signature");
+          } catch (err) {
+            console.error("Signature upload failed:", err);
+          }
+        }
         
         setFormOpen(false);
         refetch();
@@ -298,6 +362,52 @@ export default function Employees2Page() {
             await uploadEmployeeDocument(selectedEmployee.id, vaccinationCertFile, "vaccination_certificate");
           } catch (vaccErr) {
             console.error("Vaccination certificate upload failed:", vaccErr);
+          }
+        }
+
+        // Upload fingerprint files if provided
+        if (thumbFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, thumbFile, "fingerprint_thumb");
+          } catch (err) {
+            console.error("Thumb fingerprint upload failed:", err);
+          }
+        }
+        if (indexFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, indexFile, "fingerprint_index");
+          } catch (err) {
+            console.error("Index fingerprint upload failed:", err);
+          }
+        }
+        if (middleFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, middleFile, "fingerprint_middle");
+          } catch (err) {
+            console.error("Middle fingerprint upload failed:", err);
+          }
+        }
+        if (ringFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, ringFile, "fingerprint_ring");
+          } catch (err) {
+            console.error("Ring fingerprint upload failed:", err);
+          }
+        }
+        if (littleFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, littleFile, "fingerprint_little");
+          } catch (err) {
+            console.error("Little fingerprint upload failed:", err);
+          }
+        }
+
+        // Upload signature if provided
+        if (signatureFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, signatureFile, "signature");
+          } catch (err) {
+            console.error("Signature upload failed:", err);
           }
         }
         
