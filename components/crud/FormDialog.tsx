@@ -150,12 +150,12 @@ export function FormDialog({
     const file = value as File | null;
     
     return (
-      <div className="space-y-2">
+      <div className="space-y-1">
         <div 
           className={cn(
-            "relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5",
-            fieldError ? "border-destructive" : "border-border",
-            file ? "border-primary bg-primary/5" : ""
+            "relative border border-input rounded-md hover:border-primary transition-colors",
+            fieldError ? "border-destructive" : "",
+            file ? "bg-primary/5" : ""
           )}
         >
           <input
@@ -167,9 +167,9 @@ export function FormDialog({
             disabled={field.disabled || loading || isReadOnly}
           />
           {file ? (
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center gap-2 p-2">
               {field.accept?.includes("image") ? (
-                <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                <div className="h-8 w-8 rounded overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={URL.createObjectURL(file)} 
@@ -178,32 +178,32 @@ export function FormDialog({
                   />
                 </div>
               ) : (
-                <ImageIcon className="h-8 w-8 text-primary" />
+                <ImageIcon className="h-6 w-6 text-primary flex-shrink-0" />
               )}
-              <div className="text-left">
-                <p className="text-sm font-medium truncate max-w-44">{file.name}</p>
+              <div className="text-left flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{file.name}</p>
                 <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
               </div>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 px-2 text-xs flex-shrink-0"
+                onClick={(e) => { e.stopPropagation(); handleChange(field.name, null); }}
+              >
+                Remove
+              </Button>
             </div>
           ) : (
-            <div className="py-2">
-              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Click to upload</p>
-              {field.helperText && <p className="text-xs text-muted-foreground mt-1">{field.helperText}</p>}
+            <div className="flex items-center gap-2 p-2 cursor-pointer">
+              <Upload className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <div className="text-left flex-1">
+                <p className="text-xs text-muted-foreground">Choose file</p>
+                {field.helperText && <p className="text-xs text-muted-foreground/70">{field.helperText}</p>}
+              </div>
             </div>
           )}
         </div>
-        {file && (
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs text-muted-foreground"
-            onClick={() => handleChange(field.name, null)}
-          >
-            Remove file
-          </Button>
-        )}
       </div>
     );
   };

@@ -53,6 +53,7 @@ const statuses = [
 // Form fields matching backend Employee schema
 const employeeFormFields: FormField[] = [
   { name: "profile_photo_file", label: "Profile Photo", type: "file", accept: "image/*", helperText: "Upload employee photo (JPG, PNG)" },
+  { name: "cnic_picture_file", label: "CNIC Picture", type: "file", accept: "image/*,.pdf", helperText: "Upload CNIC photo (front/back)" },
   { name: "first_name", label: "First Name", required: true, placeholder: "Enter first name" },
   { name: "last_name", label: "Last Name", required: true, placeholder: "Enter last name" },
   { name: "father_name", label: "Father's Name", placeholder: "Father's name" },
@@ -81,12 +82,14 @@ const employeeFormFields: FormField[] = [
   { name: "particulars_verified_by_ssp_on", label: "Verified by SSP", type: "date" },
   { name: "verified_by_khidmat_markaz", label: "Khidmat Markaz Verified" },
   { name: "police_training_letter_date", label: "Police Training Letter Date", type: "date" },
+  { name: "police_clearance_file", label: "Police Clearance", type: "file", accept: "image/*,.pdf", helperText: "Upload police clearance certificate" },
   { name: "eobi_no", label: "EOBI No" },
   { name: "insurance", label: "Insurance" },
   { name: "social_security", label: "Social Security" },
   { name: "original_doc_held", label: "Documents Held" },
   { name: "documents_handed_over_to", label: "Documents Handed Over To" },
   { name: "vaccination_certificate", label: "Vaccination Certificate" },
+  { name: "vaccination_certificate_file", label: "Vaccination Certificate Upload", type: "file", accept: "image/*,.pdf", helperText: "Upload vaccination certificate" },
   { name: "employment_status", label: "Status", type: "select", options: statuses },
 ];
 
@@ -171,13 +174,48 @@ export default function Employees2Page() {
     return response.json();
   };
 
+  // Helper function to upload employee documents
+  const uploadEmployeeDocument = async (employeeDbId: number, file: File, documentType: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", documentType); // Backend expects "name" field
+    
+    // Get auth token from localStorage
+    const token = localStorage.getItem("access_token");
+    
+    const response = await fetch(
+      `${API_BASE_URL}/api/employees/by-db-id/${employeeDbId}/documents`,
+      { 
+        method: "POST", 
+        body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to upload ${documentType}`);
+    }
+    
+    return response.json();
+  };
+
   const handleFormSubmit = async (values: Record<string, unknown>) => {
     setFormError(null);
     
-    // Extract file from values (don't send to API)
+    // Extract files from values (don't send to API)
     const profilePhotoFile = values.profile_photo_file as File | undefined;
+    const cnicPictureFile = values.cnic_picture_file as File | undefined;
+    const policeClearanceFile = values.police_clearance_file as File | undefined;
+    const vaccinationCertFile = values.vaccination_certificate_file as File | undefined;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { profile_photo_file: _photoFile, ...employeeData } = values;
+    const { 
+      profile_photo_file: _photoFile, 
+      cnic_picture_file: _cnicFile,
+      police_clearance_file: _policeFile,
+      vaccination_certificate_file: _vaccinationFile,
+      ...employeeData 
+    } = values;
     
     try {
       if (formMode === "create") {
@@ -193,6 +231,33 @@ export default function Employees2Page() {
             // Don't fail the whole operation, employee was created
           }
         }
+
+        // Upload CNIC picture if provided
+        if (cnicPictureFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, cnicPictureFile, "cnic_picture");
+          } catch (cnicErr) {
+            console.error("CNIC picture upload failed:", cnicErr);
+          }
+        }
+
+        // Upload police clearance if provided
+        if (policeClearanceFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, policeClearanceFile, "police_clearance");
+          } catch (policeErr) {
+            console.error("Police clearance upload failed:", policeErr);
+          }
+        }
+
+        // Upload vaccination certificate if provided
+        if (vaccinationCertFile && newEmployee.id) {
+          try {
+            await uploadEmployeeDocument(newEmployee.id, vaccinationCertFile, "vaccination_certificate");
+          } catch (vaccErr) {
+            console.error("Vaccination certificate upload failed:", vaccErr);
+          }
+        }
         
         setFormOpen(false);
         refetch();
@@ -206,6 +271,33 @@ export default function Employees2Page() {
             await uploadProfilePhoto(selectedEmployee.id, profilePhotoFile);
           } catch (photoErr) {
             console.error("Photo upload failed:", photoErr);
+          }
+        }
+
+        // Upload new CNIC picture if provided
+        if (cnicPictureFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, cnicPictureFile, "cnic_picture");
+          } catch (cnicErr) {
+            console.error("CNIC picture upload failed:", cnicErr);
+          }
+        }
+
+        // Upload new police clearance if provided
+        if (policeClearanceFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, policeClearanceFile, "police_clearance");
+          } catch (policeErr) {
+            console.error("Police clearance upload failed:", policeErr);
+          }
+        }
+
+        // Upload new vaccination certificate if provided
+        if (vaccinationCertFile && selectedEmployee.id) {
+          try {
+            await uploadEmployeeDocument(selectedEmployee.id, vaccinationCertFile, "vaccination_certificate");
+          } catch (vaccErr) {
+            console.error("Vaccination certificate upload failed:", vaccErr);
           }
         }
         

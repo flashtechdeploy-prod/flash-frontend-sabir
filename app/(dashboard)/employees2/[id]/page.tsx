@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Employee2 } from "@/lib/types";
 import { useApi } from "@/hooks/use-api";
@@ -24,6 +24,17 @@ import {
   Camera
 } from "lucide-react";
 
+interface EmployeeDocument {
+  id: number;
+  employee_db_id: number;
+  name: string;
+  filename: string;
+  url: string;
+  mime_type: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export default function EmployeeDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -31,10 +42,37 @@ export default function EmployeeDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<EmployeeDocument[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
 
   const { data: employee, loading, error, refetch } = useApi<Employee2>(
     `/api/employees/by-db-id/${employeeId}`
   );
+
+  // Fetch employee documents
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch(`${API_BASE_URL}/api/employees/by-db-id/${employeeId}/documents`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        
+        if (response.ok) {
+          const docs = await response.json();
+          setDocuments(docs);
+        }
+      } catch (err) {
+        console.error("Failed to fetch documents:", err);
+      } finally {
+        setLoadingDocs(false);
+      }
+    };
+
+    if (employeeId) {
+      fetchDocuments();
+    }
+  }, [employeeId]);
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -216,7 +254,6 @@ export default function EmployeeDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            <InfoRow label="Profile Photo" value={employee.profile_photo || "Not uploaded"} />
             <InfoRow label="Father's Name" value={employee.father_name} />
             <InfoRow label="Date of Birth" value={employee.date_of_birth} />
             <InfoRow label="Gender" value={employee.gender} />
@@ -350,6 +387,41 @@ export default function EmployeeDetailPage() {
             <InfoRow label="First Aid Certification" value={employee.first_aid_certification ? "Yes" : "No"} />
             <InfoRow label="Police Training Letter Date" value={employee.police_training_letter_date} />
             <InfoRow label="Vaccination Certificate" value={employee.vaccination_certificate} />
+          </CardContent>
+        </Card>
+
+        {/* Documents */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <FileText className="h-5 w-5" /> Uploaded Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loadingDocs ? (
+              <p className="text-sm text-muted-foreground">Loading documents...</p>
+            ) : documents.length > 0 ? (
+              documents.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{doc.name}</p>
+                      <p className="text-xs text-muted-foreground">{doc.filename}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => window.open(doc.url, '_blank')}
+                  >
+                    View
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No documents uploaded</p>
+            )}
           </CardContent>
         </Card>
       </div>
